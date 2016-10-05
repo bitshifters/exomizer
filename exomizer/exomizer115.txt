@@ -1,0 +1,325 @@
+----------------------------------------------------------------------------
+
+Exomizer 1.1.5
+--------------
+
+What is it?
+
+  The Exomizer is a cross-cruncher that runs on win32, dos or Linux as a
+  command-line tool, but processes and generates files for the c64 and the
+  c16/+4 computers.
+
+   1) It is a cruncher that crunches c64/c16/+4 files.
+   2) It can produce stand-alone self-decompressing c64/c16/+4-files.
+   3) It can produce files for both "in memory" or "from disk" decrunching.
+   4) It handles RLE-sequences well and fast, no packer is necessary.
+   5) It's stand-alone decompressor can decompress $0400-$ffff (c64) or
+      $0400-$fcff (c16/+4)
+   6) It is able to crunch more than one infile into the same outfile (link).
+   7) It is able to load infiles to any given address (simple relocate).
+
+
+What is it not?
+
+  It is not a generic file archiver. The purpose of the Exomizer is limited
+  to the goal of:
+
+  1) compressing .prg files to use less disk space.
+  2) transparently recreate the larger memory image of the original .prg file
+     when loading or running the compressed .prg file.
+
+  For a good all purpose archiver check out the Commodore 8-bit native
+  puzip/gunzip utilities at Pasi Ojala's Commodore & Compression Page
+  http://www.cs.tut.fi/~albert/Dev/
+
+
+Why is it called Exomizer?
+
+  More than ten years ago, I made some packers for the c64 that were named
+  [name of group that I was a member of at the time]mizer.
+  Since I'm not a member of any group now and it is a cross cruncher I
+  figured 'Exo' was the perfect prefix. The 'mizer' suffix I just kept for
+  nostalgic reasons.
+
+
+What sets this program apart from similar programs like PuCrunch?
+
+  This program has been designed with ONLY the compression rate in mind. Not
+  many compromises has been made in the effort to achieve the highest
+  compression rates possible. As a result of this Exomizer has some drawbacks:
+
+   1) it may use up to 50MB of internal memory for worst case files.
+   2) it may take several minutes to compress a file on a modern PC.
+
+
+Are you releasing the source code?
+
+  It is available in the distribution.
+
+
+How do I invoke the exomizer?
+
+  If you run the exomizer with the -? option it will print a description of
+  the available options like this:
+
+  prompt> exomizer -?
+  usage: exomizer.exe [option]... infile[,<address>]...
+   -r           writes the outfile backwards without load address, this is
+                suitable for files that are to be decompressed directly
+                from disk, can't be combined with -l or -s
+   -l <address> adds load address to the outfile, using "auto" as <address>
+                will enable load address auto detection, can't be combined
+                with -r or -s, default is no load address
+   -s <address> adds basic-line and decruncher that exits with a jmp <address>,
+                using "sys" as <address> will enable basic-sys address auto
+                detection, can't be combined with -r or -l
+   -o <outname> sets the outfile name, default is "a.prg"
+   -q           enable quiet mode, display output is reduced to one line
+   -4           the decruncher targets the c16/+4 computers instead of the c64,
+                must be combined with -s
+   -n           turn off the decrunch effect shown by the decruncher, must be
+                combined with -s
+   -m <offset>  limits the maximum offset size
+   -p <passes>  limits the maximum number of optimization passes
+   --           treat all args to the right as non-options
+   -?           displays this help screen
+   -v           displays version and the usage license
+  All infiles are merged into the outfile. They are loaded in the order
+  they are given on the command-line, from left to right.
+  prompt> _
+
+
+Is it possible to specify an explicit load address for an infile ?
+
+  Yes, just add a ,<address> to the infiles on the commandline, like this:
+
+  prompt> exomizer -s0x1234 -o out.prg intro.prg program.prg,0x1000
+
+  This will load the program.prg file beginning at $1000 while the intro.prg
+  will load to it's normal address. Please note that there must not be any
+  spaces between the filename, the ',' and the address.
+
+
+What load addresses are valid for memory decrunching?
+
+  This depends on the file you are decrunching. You don't want the decruncher
+  to clobber the not yet decrunched data. However overlapping memory areas are
+  still possible if enough safety margin is used. How much safety margin that
+  is necessary depends on the file and on the crunching scheme. Let's take a
+  nice easy file that loads from $4000 to $5000. Let's further say that you
+  crunch this with the flag -l$4000. The crunched file will the load from $4000
+  to $4635 or something like that. Since the Exomizer decrunches backwards an
+  in-memory decrunch will go very well at the beginning since there is a large
+  safety margin between where the decruncher reads ($4635 something) and writes
+  ($5000 something). However the write address will then follow and gain on the
+  read address. The trouble starts if it catches up with it. Then the
+  decruncher will read already decrunched data instead of the expected crunched
+  data and the decrunch will fail.
+
+  So, what does this mean? It means that the crunched file has to be loaded to
+  perhaps $3ff0 or so to avoid the read address being run over. The exact
+  number of bytes to subtract from the original load address depends on the
+  crunching scheme. The exomizer has a minimum safety margin of 3. But it can
+  sometimes be larger depending on the crunched file.
+
+  This all sounds very complicated, so why not just decide on a margin that is
+  safe enough? Well, sometimes there may just not be any memory available to
+  waste on decrunch safety margins and there may always be files for which the
+  decided margin isn't big enough.
+
+  But now Exomizer comes to the rescue. The -l flag now also takes the string
+  literal "auto" as an argument. This argument tells the Exomizer to calculate
+  the minimum safety necessary for the infile and use the original load
+  address decreased by that amount. So back to the previous example: if the
+  file is crunched with the flag "-l auto" it will load back to $3ffd or
+  something like that. Decrunched from that address it will work.
+
+
+Is it possible to use hexadecimal numbers for load and start addresses?
+
+  Yes, use a '0x' or '$' prefix, like 0xc600 or $c600.
+  (It is also possible to use octal notation, just use a prefix of '0'.)
+
+
+Is it possible to crunch a basic program and then start it?
+
+  Yes, but it requires a trampoline machine code routine to set up the basic
+  environment. The exomizer decruncher has to be set to jmp to the start of
+  the trampoline. It then set things up and starts the basic interpreter.
+
+  You may do this manually as described below, or use the exobasic tool also
+  included in this distribution. It can generate basic-trampolines but also do
+  basic line renumbering and whitespace and rem statement removal etc.
+
+  Assuming that the basic program is to be run at the standard location, $0801
+  (c64) $1001 (c16/+4) the things that the trampoline needs to setup are:
+  + The basic "start of basic variables" zero page pointer. ($2d/$2e) This
+    pointer has to be set to somewhere safe, normally this is set to just
+    beyond the basic program. In most cases it is enough to use the value
+    normally set by the computer when loading the uncrunched basic program.
+  + It is necessary to make sure that address $0800 (c64) or $1000 (c16/+4)
+    contains a zero byte. This can be done by setting it in the trampoline
+    or making sure that the address is covered by one of the files being
+    crunched.
+  + it has to start the basic interpreter. on a c64 this is done by
+    a "jsr $A659", "jmp $A7AE" sequence and on the c16/+4 it is done by a
+    "jsr $8BBE" followed by a "jmp $8BDC".
+
+  In more complex situations, perhaps if the basic start is relocated or other
+  data is stored in the basic variable area, it may be necessary set other
+  basic zero page pointers like "start of basic text" ($2b/$2c) and/or "highest
+  address used by basic" ($37/$38) as well.
+
+
+Why are the colors wrong after decrunching on the c16/+4?
+
+  The c16/+4 decruncher overwrites the Color/luminance table at $0113-$0123. A
+  "jsr $F3B5" at the beginnig of the basic trampoline or in the beginning of
+  the program will restore the table to the system default.
+
+
+How much overhead does the builtin decruncher add to a file?
+
+  These numbers compares resulting file sizes when crunching a file with the
+  -s flag and crunching it with the -l flag. These numbers is for the c64
+  decruncher. The c16/+4 decruncher adds another 3 bytes to the sizes and $0803
+  to the addresses.
+
+  Files with [load address < $0736] will get 288 bytes larger.
+  Files with [$0736 <= load address < $0835] will get 273 bytes larger.
+  Files with [$0835 <= load address] will get 267 bytes larger.
+
+
+What memory addresses does the decruncher clobber?
+
+  The following description covers the c64 decruncher. The c16/+4 decruncher
+  differs from this description only by having a 3 bytes longer startup code,
+  $07e7 changes to $0fe7, $081d changes to $1020 and $0835 changes to $1038.
+
+  Except for the addresses covered by the file itself $0801-$XXXX, the
+  decruncher also clobbers the following addresses:
+
+  Eight zeropage addresses are used: $a7, $ae-$af, $fb-$ff.
+  The decruncher clobbers the stack from $0100 to the stackpointer by copying
+  186 bytes of itself (and possibly some more) to the stack at $0100-$01xx. The
+  tape buffer is used for tables, 156 bytes in total at $0334-$03d0.
+
+  The built-in decruncher will possibly transfer some of the crunched data
+  before decrunching it. This copying assures that <start of crunched data> <=
+  (<uncrunched data start> - <decrunch safety margin>). This is necessary in
+  order for the data to decrunch properly.
+
+  The decrunchers with decrunch effects will naturally clobber the addresses of
+  the effect bytes too.
+
+  The exodecrunch.s decruncher defaults to using the same zeropage addresses
+  as the stand alone decruncher. It also uses a 156 byte table. However both
+  the table area and the zeropage addresses are easy to relocate.
+
+
+How do I use the decruncher sourcecode?
+
+  You simply call jsr decrunch_file. But first you must have implemented a
+  suitable get_byte routine for it. The decruncher has only a simple
+  get_byte provided as an example. If you want to decrunch from file you have
+  to write the file handling routines yourselves. See the exodecrunch.s file
+  for more info.
+
+
+Does it have any weak points?
+
+  Yes, it is not very good at crunching already crunched data. It has not been
+  a priority for me to fix this because I feel that crunching already crunched
+  data is something that should be avoided. No cruncher is good at it and it
+  will, at best, just create longer decrunch times.
+  Exomizer just happens to be worse at this than some other crunchers.
+  In fact, my experience is that the Exomizer likes totally unpacked and
+  uncrunched files best.
+
+
+Some Performance numbers:
+
+  These tests are made on a AMD duron 700MHz. the ByteBoiler+RLE sizes for
+  the delenn.bin sheridan.bin and ivanova.bin has been taken from the home-
+  page of PuCrunch. I could not get them so small myself and I really want
+  to show the best possible figures for any cruncher. The Exomizer sizes
+  includes the c64 decruncher (-s option).
+
+  fist.bin          time           size         extra flags
+  --------         ------         ------        -----------
+  Exomizer          42.6s          35924
+  ByteBoiler+RLE                   36602
+  PuCrunch           0.2s          37230        -fshort
+
+  bofh.bin (PuCrunch-crunched internal leveldata)
+  --------         ------         ------        -----------
+  Exomizer          66.7s          29406
+  ByteBoiler+RLE                   29708
+  PuCrunch           0.2s          30111        -fshort
+
+  bofh.bin (Exomizer-crunched internal leveldata)
+  --------         ------         ------        -----------
+  Exomizer          85.9s          28861
+  ByteBoiler+RLE                   29235
+  PuCrunch           0.2s          29556        -fshort
+
+
+And some files known from the PuCrunch homepage.
+  delenn.bin
+  ----------       ------         ------        -----------
+  Exomizer          64.3s          18845
+  PuCrunch           0.3s          19709        -p2 -fshort
+  ByteBoiler+RLE                   19838
+
+  sheridan.bin
+  ------------     ------         ------        -----------
+  Exomizer          76.7s          12153
+  ByteBoiler+RLE                   12478
+  PuCrunch           0.3s          12501        -p2 -fshort
+
+  ivanova.bin
+  -----------      ------         ------        -----------
+  Exomizer          94.0s           9493
+  ByteBoiler+RLE                    9812
+  PuCrunch           0.3s           9819        -p2 -fshort
+
+
+Who made it?
+
+  My name is Magnus Lind.
+  I am reachable by email: magli143@comhem.se
+
+
+What else c64-related have you made?
+
+  I have previously made some native packers for the c64 and an iffl-
+  system, but that was at least ten years ago or so.
+
+
+Credits
+-------
+  Inspiration:
+   The Oneway crunchers: Byteboiler, The Cruncher AB and CruelCrunch.
+   Pasi Ojala's PuCrunch
+
+  Beta testing:
+   Lasse Öörni
+   Csabo / LOD
+   Overkiller / Hokuto Force / PoL
+   iAN CooG / Hokuto Force
+   Rafal Szyja
+   bubis / Resource
+   Ninja / The Dreams
+
+  Bug Reporting:
+   Csabo / LOD
+   Soci / Singular
+   6R6 / Nostalgia
+   Ninja / The Dreams
+
+  Feedback:
+   Count Zer0
+   bubis / Resource
+   Ninja / The Dreams
+
+----------------------------------------------------------------------------
