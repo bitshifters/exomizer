@@ -8,3 +8,12 @@ Exomizer is a program that compresses files in a way that tries to be as efficie
 Forked into Github for reference, since no official source repo exists (yet)
 
 All credit goes to original author
+
+## Usage - v1
+
+https://raw.githubusercontent.com/bitshifters/exomizer/master/exomizer/exomizer115.txt
+
+## Usage - v2
+
+https://raw.githubusercontent.com/bitshifters/exomizer/master/exomizer2/exo20info.txt
+
