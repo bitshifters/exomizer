@@ -1,10 +1,11 @@
-# exomizer
+# PLEASE NOTE EXOMIZER NOW HAS AN OFFICIAL HOME & BIT BUCKET SOURCE PAGE
+[Click here](https://bitbucket.org/magli143/exomizer/wiki/Home)
+
+
+# exomizer source code archive
 An archive of [Exomizer v1](http://hem.bredband.net/magli143/exo/index_old.html) and [Exomizer v2](http://hem.bredband.net/magli143/exo/index_old.html)
 
 Preserved here in github in case the old site disappeared from the web.
-
-# PLEASE NOTE EXOMIZER NOW HAS AN OFFICIAL HOME & BIT BUCKET SOURCE PAGE
-[Click here](https://bitbucket.org/magli143/exomizer/wiki/Home)
 
 ##Exomizer tool source code
 
