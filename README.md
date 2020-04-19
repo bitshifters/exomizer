@@ -1,4 +1,5 @@
 # PLEASE NOTE EXOMIZER NOW HAS AN OFFICIAL HOME & BIT BUCKET SOURCE PAGE
+# THIS REPO IS A LEGACY ARCHIVE
 [Click here](https://bitbucket.org/magli143/exomizer/wiki/Home)
 
 
